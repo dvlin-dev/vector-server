@@ -20,7 +20,7 @@ import { CompletionsDto, CompletionsRegularDto } from './dto/chat.dto'
 import { CreateMessageDto } from './dto/create-message.dto'
 
 import { Response } from 'express'
-import { CreateChatCompletionRequest } from 'openai'
+import { ChatCompletionCreateParamsBase } from 'openai/resources/chat/completions'
 
 @ApiTags('Conversation')
 @UseInterceptors(ClassSerializerInterceptor)

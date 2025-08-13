@@ -23,6 +23,7 @@ import { UpdateSiteDto } from './dto/update-site.dto';
 import { CreateTicketDto } from './dto/create-ticket.dto';
 import { UpdateTicketDto } from './dto/update-ticket.dto';
 import { SummarizeSiteDto } from './dto/summarize-site.dto';
+import { GenerateQuestionsDto, GenerateQuestionsResponse } from './dto/generate-questions.dto';
 
 @ApiTags('站点管理')
 @Controller('site')
@@ -99,6 +100,35 @@ export class SiteController {
   @ApiResponse({ status: 500, description: 'AI总结生成失败' })
   summarizeAndUpdateDescription(@Body() summarizeSiteDto: SummarizeSiteDto) {
     return this.siteService.summarizeAndUpdateSiteDescription(summarizeSiteDto);
+  }
+
+  @Post('generate-questions')
+  @ApiOperation({ summary: '生成访问网站时可能想问的问题' })
+  @ApiResponse({ 
+    status: 200, 
+    description: '问题生成成功',
+    schema: {
+      type: 'object',
+      properties: {
+        list: {
+          type: 'array',
+          items: {
+            type: 'string'
+          },
+          minItems: 3,
+          maxItems: 3,
+          example: [
+            '这个网站的主要功能是什么？',
+            '如何注册和使用该平台的服务？',
+            '网站提供哪些特色功能或优势？'
+          ]
+        }
+      }
+    }
+  })
+  @ApiResponse({ status: 500, description: 'AI问题生成失败' })
+  generateQuestions(@Body() generateQuestionsDto: GenerateQuestionsDto): Promise<GenerateQuestionsResponse> {
+    return this.siteService.generateQuestions(generateQuestionsDto);
   }
 
   // Ticket 相关接口

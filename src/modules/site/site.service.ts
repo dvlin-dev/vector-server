@@ -5,20 +5,32 @@ import { UpdateSiteDto } from './dto/update-site.dto';
 import { CreateTicketDto } from './dto/create-ticket.dto';
 import { UpdateTicketDto } from './dto/update-ticket.dto';
 import { SummarizeSiteDto } from './dto/summarize-site.dto';
+import { GenerateQuestionsDto } from './dto/generate-questions.dto';
 import { ConversationService } from '../conversation/conversation.service';
 import { MessageRole } from '../conversation/dto/chat.dto';
 import { ConfigService } from '@nestjs/config';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import OpenAI from 'openai';
+import { zodResponseFormat } from 'openai/helpers/zod';
+import { z } from 'zod';
 
 @Injectable()
 export class SiteService {
+  private openai: OpenAI;
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly conversationService: ConversationService,
     private readonly configService: ConfigService,
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService
-  ) {}
+  ) {
+    // 初始化 OpenAI 客户端
+    this.openai = new OpenAI({
+      apiKey: this.configService.get('OPENAI_API_KEY'),
+      baseURL: this.configService.get('OPENAI_BASE_URL'),
+    });
+  }
 
   // Site 相关方法
   async createSite(createSiteDto: CreateSiteDto) {
@@ -292,6 +304,69 @@ ${content}
     } catch (error) {
       this.logger.error('AI站点描述总结生成失败', error);
       return null;
+    }
+  }
+
+  /**
+   * 生成访问网站时可能想问的问题
+   */
+  async generateQuestions(generateQuestionsDto: GenerateQuestionsDto): Promise<{ list: string[] }> {
+    const { content } = generateQuestionsDto;
+
+    try {
+      // 定义 Zod schema 用于结构化输出
+      const QuestionsSchema = z.object({
+        questions: z.array(z.string()).describe("生成的3个问题列表")
+      });
+
+      type QuestionsType = z.infer<typeof QuestionsSchema>;
+
+      const questionsPrompt = `根据以下网站内容，生成3个访问者浏览该网站时可能想要了解的问题。这些问题应该：
+1. 与网站内容密切相关
+2. 帮助用户更好地了解网站的服务或产品
+3. 具有实际的参考价值
+
+网站内容：
+${content}
+
+请生成3个具体的、有价值的问题。`;
+
+      // 使用 zodResponseFormat 进行结构化输出
+      const completion = await this.openai.chat.completions.parse({
+        model: this.configService.get('OPENAI_API_MODEL') || 'gpt-4o-2024-08-06',
+        messages: [
+          {
+            role: 'system',
+            content: '你是一个专业的内容分析师，能够根据网站内容生成用户可能感兴趣的问题。生成的问题应该具体、有价值、与内容相关。'
+          },
+          {
+            role: 'user',
+            content: questionsPrompt
+          }
+        ],
+        response_format: zodResponseFormat(QuestionsSchema as any, "questions_response"),
+        temperature: 0.3,
+      });
+
+      const result = completion.choices[0]?.message?.parsed as QuestionsType;
+      
+      if (result && result.questions) {
+        return { list: result.questions };
+      }
+
+      // 如果解析失败，抛出错误进入catch块
+      throw new Error('结构化输出解析失败');
+
+    } catch (error) {
+      this.logger.error('AI问题生成失败', error);
+      // 返回默认问题
+      return {
+        list: [
+          'What is the main function of this website?',
+          'How to use the services of this website?',
+          'What are the features or advantages of this website?'
+        ]
+      };
     }
   }
 }

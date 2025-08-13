@@ -1,7 +1,7 @@
 import { Injectable, Inject, LoggerService } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { PrismaService } from 'src/utils/prisma/prisma.service'
-import { ChatCompletionRequestMessage, Configuration, OpenAIApi } from 'openai'
+import OpenAI from 'openai'
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston'
 import { getKeyConfigurationFromEnvironment } from 'src/utils/llm/configuration'
 import { Message, MessageRole } from '@prisma/client'
@@ -18,7 +18,7 @@ export interface SummaryMetadata {
 
 @Injectable()
 export class MessageSummaryService {
-  private openai: OpenAIApi
+  private openai: OpenAI
   private readonly SUMMARY_BATCH_SIZE = 10 // 每10轮消息进行一次总结
   private readonly CONTEXT_LIMIT = 10 // 最多保留最近10条消息作为上下文
 
@@ -29,11 +29,10 @@ export class MessageSummaryService {
     private readonly logger: LoggerService
   ) {
     const keyConfiguration = getKeyConfigurationFromEnvironment(this.configService)
-    const configuration = new Configuration({
+    this.openai = new OpenAI({
       apiKey: keyConfiguration.apiKey,
-      basePath: keyConfiguration.basePath,
+      baseURL: keyConfiguration.basePath,
     })
-    this.openai = new OpenAIApi(configuration)
   }
 
   /**
@@ -171,7 +170,7 @@ ${conversationHistory}
 
 总结应该简洁明了，便于理解对话的核心内容。`
 
-      const response = await this.openai.createChatCompletion({
+      const response = await this.openai.chat.completions.create({
         model: this.configService.get('OPENAI_API_MODEL') || 'gpt-4o',
         messages: [
           {
@@ -186,7 +185,7 @@ ${conversationHistory}
         temperature: 0.3,
       })
 
-      return response.data.choices[0]?.message?.content || null
+      return response.choices[0]?.message?.content || null
     } catch (error) {
       this.logger.error('AI总结生成失败', error)
       return null
@@ -197,9 +196,9 @@ ${conversationHistory}
    * 获取用于对话的消息上下文
    * 优先使用最新的总结 + 最近的消息，而不是所有历史消息
    */
-  async getContextMessages(conversationId: string): Promise<ChatCompletionRequestMessage[]> {
+  async getContextMessages(conversationId: string): Promise<OpenAI.Chat.Completions.ChatCompletionMessageParam[]> {
     const lastSummary = await this.getLastSummaryMessage(conversationId)
-    const contextMessages: ChatCompletionRequestMessage[] = []
+    const contextMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = []
 
     if (lastSummary) {
       // 添加总结作为上下文
