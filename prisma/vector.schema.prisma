@@ -1,0 +1,22 @@
+generator vectorClient {
+  provider        = "prisma-client-js"
+  output          = "../node_modules/@prisma/vector-client"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource vectorDb {
+  provider   = "postgresql"
+  url        = env("VECTOR_DATABASE_URL")
+  extensions = [vector]
+}
+
+model Index {
+  id        String                 @id @default(uuid())
+  content   String
+  vector    Unsupported("vector")?
+  metadata  Json?
+  createdAt DateTime               @default(now())
+  updatedAt DateTime               @updatedAt
+  siteId    String?
+  sectionId String?
+}

@@ -1,0 +1,39 @@
+version: '3.1'
+
+services:
+  db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - ${DB_HOST}:${DB_PORT}:5432
+    volumes:
+      - pgdb-data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  vector:
+    image: pgvector/pgvector:pg17
+    container_name: vector
+    restart: always
+    environment:
+      POSTGRES_USER: ${VECTOR_DB_USERNAME}
+      POSTGRES_DB: ${VECTOR_DB_DATABASE}
+      POSTGRES_PASSWORD: ${VECTOR_DB_PASSWORD}
+    ports:
+      - ${VECTOR_DB_HOST}:${VECTOR_DB_PORT}:5432
+    volumes:
+      - pgvector-data:/var/lib/postgresql/data
+    networks:
+    - app-network
+
+volumes:
+  pgdb-data:
+  pgvector-data:
+
+
+networks:
+  app-network:
+    driver: bridge

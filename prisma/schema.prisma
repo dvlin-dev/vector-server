@@ -1,0 +1,36 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Conversation {
+  id        String    @id @default(uuid())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now())
+  messages  Message[]
+  abstract  String?
+  siteId    String?
+}
+
+model Message {
+  id             String        @id @default(uuid())
+  content        String
+  role           MessageRole
+  createdAt      DateTime      @default(now())
+  conversationId String?
+  conversation   Conversation? @relation(fields: [conversationId], references: [id])
+  // 总结相关字段
+  isSummary      Boolean       @default(false) // 是否为总结消息
+  summaryData    Json? // 总结的元数据（包含原始消息数量、时间范围等）
+  originalCount  Int? // 被总结的原始消息数量
+}
+
+enum MessageRole {
+  system
+  assistant
+  user
+}
