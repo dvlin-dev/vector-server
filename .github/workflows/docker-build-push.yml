@@ -3,9 +3,7 @@ name: Docker Build and Push
 on:
   push:
     branches:
-      - master
-    paths:
-      - 'server/**' # 只有当server目录有变更时才触发
+      - main
 
 jobs:
   build-and-push:
