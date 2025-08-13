@@ -410,6 +410,9 @@ export class ConversationService {
         conversationId,
         content,
         role,
+        isSummary: false,
+        summaryData: null,
+        originalCount: null,
         createdAt: new Date(),
       },
     })
