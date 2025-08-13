@@ -23,3 +23,6 @@ docker rm vector-server
 docker run -d -p 0.0.0.0:3100:13000 --name vector-server -v $(pwd)/app.env:/app/.env dvlindev/vector-server
 
 <!-- docker run -d -p 0.0.0.0:3100:13000 --name vector-server --env-file $(pwd)/app.env dvlindev/vector-server -->
+
+
+npx prisma migrate deploy
