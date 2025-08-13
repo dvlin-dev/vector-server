@@ -7,6 +7,7 @@ import * as Joi from 'joi'
 import { PrismaModule } from './utils/prisma/prisma.module'
 import { ConversationModule } from './modules/conversation/conversation.module'
 import { VectorModule } from './modules/vector/vector.module'
+import { SiteModule } from './modules/site/site.module'
 
 const envFilePath = `.env`
 const schema = Joi.object({
@@ -68,6 +69,7 @@ const schema = Joi.object({
     }),
     ConversationModule,
     VectorModule,
+    SiteModule,
   ],
   controllers: [],
   providers: [Logger],

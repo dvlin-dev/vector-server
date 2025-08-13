@@ -34,3 +34,28 @@ enum MessageRole {
   assistant
   user
 }
+
+model Site {
+  id          String   @id @default(uuid())
+  siteId      String   @unique // 外部平台的 id
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  tickets     Ticket[]
+}
+
+model Ticket {
+  id           String       @id @default(uuid())
+  content      String
+  status       TicketStatus @default(PENDING)
+  visitorEmail String
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  siteId       String
+  site         Site         @relation(fields: [siteId], references: [id], onDelete: Cascade)
+}
+
+enum TicketStatus {
+  PENDING // 待处理
+  PROCESSED // 已处理
+}
