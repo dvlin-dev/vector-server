@@ -3,7 +3,7 @@ import { PrismaService } from '../../utils/prisma/prisma.service';
 import { CreateSiteDto } from './dto/create-site.dto';
 import { UpdateSiteDto } from './dto/update-site.dto';
 import { CreateTicketDto } from './dto/create-ticket.dto';
-import { UpdateTicketDto } from './dto/update-ticket.dto';
+import { UpdateTicketDto, TicketStatus } from './dto/update-ticket.dto';
 import { SummarizeSiteDto } from './dto/summarize-site.dto';
 import { GenerateQuestionsDto } from './dto/generate-questions.dto';
 import { ConversationService } from '../conversation/conversation.service';
@@ -150,8 +150,16 @@ export class SiteService {
     });
   }
 
-  async findAllTickets(siteId?: string) {
-    const where = siteId ? { siteId } : {};
+  async findAllTickets(siteId?: string, status?: TicketStatus) {
+    const where: any = {};
+    
+    if (siteId) {
+      where.siteId = siteId;
+    }
+    
+    if (status && Object.values(TicketStatus).includes(status)) {
+      where.status = status;
+    }
     
     return await this.prisma.ticket.findMany({
       where,

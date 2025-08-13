@@ -21,7 +21,8 @@ import { SiteService } from './site.service';
 import { CreateSiteDto } from './dto/create-site.dto';
 import { UpdateSiteDto } from './dto/update-site.dto';
 import { CreateTicketDto } from './dto/create-ticket.dto';
-import { UpdateTicketDto } from './dto/update-ticket.dto';
+import { UpdateTicketDto, TicketStatus } from './dto/update-ticket.dto';
+import { ListTicketsDto } from './dto/list-tickets.dto';
 import { SummarizeSiteDto } from './dto/summarize-site.dto';
 import { GenerateQuestionsDto, GenerateQuestionsResponse } from './dto/generate-questions.dto';
 
@@ -142,10 +143,9 @@ export class SiteController {
 
   @Get('ticket/list')
   @ApiOperation({ summary: '获取工单列表' })
-  @ApiQuery({ name: 'siteId', required: false, description: '站点ID，可选过滤参数' })
   @ApiResponse({ status: 200, description: '获取工单列表成功' })
-  findAllTickets(@Query('siteId') siteId?: string) {
-    return this.siteService.findAllTickets(siteId);
+  findAllTickets(@Query() query: ListTicketsDto) {
+    return this.siteService.findAllTickets(query.siteId, query.status);
   }
 
   @Get('ticket/:id')
