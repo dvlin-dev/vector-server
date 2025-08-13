@@ -182,7 +182,6 @@ export class ConversationService {
           model: this.configService.get('OPENAI_API_MODEL') || 'gpt-4o',
           messages: openaiMessages,
           temperature: 0.6,
-          max_tokens: 2000,
           stream: true,
         },
         { responseType: 'stream' }

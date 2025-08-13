@@ -4,6 +4,7 @@ export interface KeyConfiguration {
   apiType?: ModelType;
   apiKey?: string;
   apiModel?: string;
+  apiModel2?: string;
   azureApiKey?: string;
   azureInstanceName?: string;
   azureApiVersion?: string;

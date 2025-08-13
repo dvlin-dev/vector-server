@@ -184,7 +184,6 @@ ${conversationHistory}
           }
         ],
         temperature: 0.3,
-        max_tokens: 500,
       })
 
       return response.data.choices[0]?.message?.content || null

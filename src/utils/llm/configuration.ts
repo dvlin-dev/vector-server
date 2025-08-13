@@ -9,6 +9,7 @@ export const getKeyConfigurationFromEnvironment = (
     apiType: configService.get('OPENAI_TYPE') as ModelType,
     apiKey: configService.get('OPENAI_API_KEY'),
     apiModel: configService.get('OPENAI_API_MODEL'),
+    apiModel2: configService.get('OPENAI_API_MODEL_2'),
     azureApiKey: configService.get('AZURE_OPENAI_API_KEY'),
     azureInstanceName: configService.get('AZURE_OPENAI_API_INSTANCE_NAME'),
     azureApiVersion: configService.get('AZURE_OPENAI_API_VERSION'),

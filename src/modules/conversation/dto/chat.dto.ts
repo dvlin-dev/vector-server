@@ -37,7 +37,7 @@ export class CompletionsRegularDto {
   messages: MessageDto[]
 
   @ApiProperty({ description: 'model', required: true, default: 'moonshotai/kimi-k2-instruct'})
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
   model: string
 

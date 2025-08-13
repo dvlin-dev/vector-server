@@ -1,13 +1,24 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, Inject, LoggerService } from '@nestjs/common';
 import { PrismaService } from '../../utils/prisma/prisma.service';
 import { CreateSiteDto } from './dto/create-site.dto';
 import { UpdateSiteDto } from './dto/update-site.dto';
 import { CreateTicketDto } from './dto/create-ticket.dto';
 import { UpdateTicketDto } from './dto/update-ticket.dto';
+import { SummarizeSiteDto } from './dto/summarize-site.dto';
+import { ConversationService } from '../conversation/conversation.service';
+import { MessageRole } from '../conversation/dto/chat.dto';
+import { ConfigService } from '@nestjs/config';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 
 @Injectable()
 export class SiteService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly conversationService: ConversationService,
+    private readonly configService: ConfigService,
+    @Inject(WINSTON_MODULE_NEST_PROVIDER)
+    private readonly logger: LoggerService
+  ) {}
 
   // Site 相关方法
   async createSite(createSiteDto: CreateSiteDto) {
@@ -220,5 +231,67 @@ export class SiteService {
       },
       stats
     };
+  }
+
+  // AI总结相关方法
+  async summarizeAndUpdateSiteDescription(summarizeSiteDto: SummarizeSiteDto) {
+    const { siteId, content } = summarizeSiteDto;
+
+    try {
+      // 首先检查站点是否存在
+      const site = await this.findSiteBySiteId(siteId);
+
+      // 使用AI生成站点描述总结
+      const summary = await this.generateSiteSummary(content);
+
+      if (!summary) {
+        throw new Error('AI总结生成失败');
+      }
+
+      // 更新站点描述
+      const updatedSite = await this.updateSite(site.id, { description: summary });
+
+      return {
+        success: true,
+        summary,
+        site: updatedSite
+      };
+    } catch (error) {
+      this.logger.error(`站点描述总结失败，站点ID: ${siteId}`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * 使用AI生成站点描述总结
+   */
+  private async generateSiteSummary(content: string): Promise<string | null> {
+    try {
+      const summaryPrompt = `请根据以下内容为网站生成一个简洁明了的描述总结，描述应该包含网站的主要功能、服务或特色，长度控制在100字以内：
+
+${content}
+
+请生成一个专业、准确、简洁的网站描述总结。`;
+
+      const response = await this.conversationService.completions({
+        messages: [
+          {
+            role: MessageRole.system,
+            content: '你是一个专业的网站内容分析助手，能够准确提取网站的核心信息并生成简洁明了的描述总结。'
+          },
+          {
+            role: MessageRole.user, 
+            content: summaryPrompt
+          }
+        ],
+        model:  this.configService.get('OPENAI_API_MODEL') || 'moonshotai/kimi-k2-instruct',
+        temperature: 0.3
+      });
+
+      return response?.trim() || null;
+    } catch (error) {
+      this.logger.error('AI站点描述总结生成失败', error);
+      return null;
+    }
   }
 }

@@ -22,6 +22,7 @@ import { CreateSiteDto } from './dto/create-site.dto';
 import { UpdateSiteDto } from './dto/update-site.dto';
 import { CreateTicketDto } from './dto/create-ticket.dto';
 import { UpdateTicketDto } from './dto/update-ticket.dto';
+import { SummarizeSiteDto } from './dto/summarize-site.dto';
 
 @ApiTags('站点管理')
 @Controller('site')
@@ -89,6 +90,15 @@ export class SiteController {
   @ApiResponse({ status: 404, description: '站点不存在' })
   getSiteStats(@Param('id') id: string) {
     return this.siteService.getSiteStats(id);
+  }
+
+  @Post('summarize')
+  @ApiOperation({ summary: '总结并更新站点描述' })
+  @ApiResponse({ status: 200, description: '站点描述总结成功' })
+  @ApiResponse({ status: 404, description: '站点不存在' })
+  @ApiResponse({ status: 500, description: 'AI总结生成失败' })
+  summarizeAndUpdateDescription(@Body() summarizeSiteDto: SummarizeSiteDto) {
+    return this.siteService.summarizeAndUpdateSiteDescription(summarizeSiteDto);
   }
 
   // Ticket 相关接口
