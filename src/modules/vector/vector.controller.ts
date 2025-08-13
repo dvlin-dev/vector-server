@@ -70,8 +70,8 @@ export class VectorController {
     return this.vectorService.similaritySearch(searchVectorDto)
   }
 
-  @ApiOperation({ summary: '获取所有向量数据' })
-  @ApiResponse({ status: 200, description: '成功获取向量列表' })
+  @ApiOperation({ summary: '获取当前网站下所有的向量数据列表' })
+  @ApiResponse({ status: 200, description: '成功获取向量列表，支持通过siteId和sectionId筛选特定网站的数据' })
   @Get('list')
   async list(@Query() listVectorsDto: ListVectorsDto) {
     return this.vectorService.list(listVectorsDto)

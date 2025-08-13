@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger'
-import { IsInt, IsOptional } from 'class-validator'
+import { IsInt, IsOptional, IsString } from 'class-validator'
 import { Type } from 'class-transformer'
 
 export class ListVectorsDto {
@@ -14,4 +14,14 @@ export class ListVectorsDto {
   @IsOptional()
   @Type(() => Number)
   pageSize?: number = 10
+
+  @ApiProperty({ description: '网站ID，用于筛选特定网站的向量数据', required: false })
+  @IsString()
+  @IsOptional()
+  siteId?: string
+
+  @ApiProperty({ description: '网站区块ID，用于筛选特定网站的向量数据', required: false })
+  @IsString()
+  @IsOptional()
+  sectionId?: string
 }

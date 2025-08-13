@@ -188,18 +188,28 @@ export class VectorService {
   }
 
   async list(listVectorsDto: ListVectorsDto) {
-    const { page = 1, pageSize = 10 } = listVectorsDto
+    const { page = 1, pageSize = 10, siteId, sectionId } = listVectorsDto
     const skip = (page - 1) * pageSize
+
+    // 构建查询条件
+    const where: any = {}
+    if (siteId) {
+      where.siteId = siteId
+    }
+    if (sectionId) {
+      where.sectionId = sectionId
+    }
 
     const [items, total] = await Promise.all([
       this.prismaVector.index.findMany({
+        where,
         skip,
         take: pageSize,
         orderBy: {
           createdAt: 'desc',
         },
       }),
-      this.prismaVector.index.count(),
+      this.prismaVector.index.count({ where }),
     ])
 
     return {
