@@ -25,8 +25,8 @@ jobs:
       - name: 构建并推送 Docker 镜像
         uses: docker/build-push-action@v5
         with:
-          context: ./server
-          file: ./server/Dockerfile.app
+          context: ./
+          file: ./Dockerfile.app
           push: true
           platforms: linux/amd64
           tags: |
