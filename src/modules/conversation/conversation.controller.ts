@@ -16,10 +16,11 @@ import { ConversationService } from './conversation.service'
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston'
 import { CreateConversationDto } from './dto/create-conversation.dto'
 
-import { CompletionsDto } from './dto/chat.dto'
+import { CompletionsDto, CompletionsRegularDto } from './dto/chat.dto'
 import { CreateMessageDto } from './dto/create-message.dto'
 
 import { Response } from 'express'
+import { CreateChatCompletionRequest } from 'openai'
 
 @ApiTags('Conversation')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -72,8 +73,8 @@ export class ConversationController {
   @ApiOperation({ summary: 'completions (non-streaming)' })
   @ApiResponse({ status: 200, description: 'Successfully get completions' })
   @Post('/completions-regular')
-  async completionsRegular(@Body() completionsDto: CompletionsDto) {
-    return this.conversationService.completionsRegular(completionsDto)
+  async completionsRegular(@Body() completionsDto: CompletionsRegularDto) {
+    return this.conversationService.completions(completionsDto)
   }
 
   // 消息相关接口

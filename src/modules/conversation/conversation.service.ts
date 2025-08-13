@@ -2,7 +2,7 @@ import { Inject, Injectable, LoggerService } from '@nestjs/common'
 import { CreateConversationDto } from './dto/create-conversation.dto'
 import { PrismaService } from 'src/utils/prisma/prisma.service'
 import { getKeyConfigurationFromEnvironment } from 'src/utils/llm/configuration'
-import { CompletionsDto } from './dto/chat.dto'
+import { CompletionsDto, CompletionsRegularDto } from './dto/chat.dto'
 import { ConfigService } from '@nestjs/config'
 import { ChatCompletionRequestMessage, Configuration, OpenAIApi, CreateChatCompletionRequest } from 'openai'
 import { ModelType } from 'src/types/chat'
@@ -113,9 +113,23 @@ export class ConversationService {
    * @param request OpenAI 的原生请求格式
    * @returns AI 的回复内容
    */
-  async completions(request: CreateChatCompletionRequest): Promise<string> {
+  async completions(request: CompletionsRegularDto): Promise<string> {
     try {
-      const response = await this.openai.createChatCompletion(request)
+      const { messages, model, temperature } = request
+      const systemMessage: ChatCompletionRequestMessage = {
+        role: 'system',
+        content: this.systemPrompt,
+      }
+      const openaiMessages = [
+        systemMessage,
+        ...messages,
+      ]
+
+      const response = await this.openai.createChatCompletion({
+        model: model || this.configService.get('OPENAI_API_MODEL') || 'gpt-4o',
+        messages: openaiMessages, 
+        temperature,
+      })
 
       return response.data.choices[0].message.content
     } catch (error) {
@@ -125,58 +139,6 @@ export class ConversationService {
         data: error.response?.data,
       })
 
-      throw new Error(`Failed to call OpenAI API: ${error.message}`)
-    }
-  }
-
-  /**
-   * 带数据库存储的对话完成方法 (兼容原有接口)
-   */
-  async completionsRegular(completionsDto: CompletionsDto) {
-    const { messages, conversationId } = completionsDto
-
-    const systemMessage: ChatCompletionRequestMessage = {
-      role: 'system',
-      content: this.systemPrompt,
-    }
-
-    const openaiMessages = [
-      systemMessage,
-      ...messages.map((message) => ({
-        role: message.role,
-        content: message.content,
-      })),
-    ]
-
-    // 1. 保存用户发送的最后一条消息到数据库
-    const lastUserMessage = messages[messages.length - 1]
-    if (lastUserMessage.role === 'user') {
-      await this.createMessage({
-        conversationId,
-        content: lastUserMessage.content,
-        role: lastUserMessage.role,
-      })
-    }
-
-    try {
-      // 使用通用的 AI 请求方法
-      const assistantResponse = await this.completions({
-        model: this.configService.get('OPENAI_API_MODEL') || 'gpt-4o',
-        messages: openaiMessages,
-        temperature: 0.6,
-        max_tokens: 2000,
-      })
-
-      // 2. 保存助手回复消息到数据库
-      await this.createMessage({
-        conversationId,
-        content: assistantResponse,
-        role: 'assistant',
-      })
-
-      // 返回生成的文本
-      return assistantResponse
-    } catch (error) {
       throw new Error(`Failed to call OpenAI API: ${error.message}`)
     }
   }

@@ -1,14 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger'
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator'
+import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator'
 
 // 定义 MessageRole 枚举
-enum MessageRole {
+export enum MessageRole {
   system = 'system',
   assistant = 'assistant',
   user = 'user',
 }
 
-class MessageDto {
+export class MessageDto {
   @ApiProperty({ description: 'message content', required: true })
   @IsNotEmpty()
   @IsString()
@@ -28,4 +28,21 @@ export class CompletionsDto {
   @IsNotEmpty()
   @IsString()
   conversationId: string
+}
+
+
+export class CompletionsRegularDto {
+  @ApiProperty({ description: 'messages', required: true, type: [MessageDto] })
+  @IsNotEmpty()
+  messages: MessageDto[]
+
+  @ApiProperty({ description: 'model', required: true, default: 'moonshotai/kimi-k2-instruct'})
+  @IsNotEmpty()
+  @IsString()
+  model: string
+
+  @ApiProperty({ description: 'temperature', required: true, default: 0.7 })
+  @IsNotEmpty()
+  @IsNumber()
+  temperature: number
 }

@@ -15,6 +15,7 @@ import { ListVectorsDto } from './dto/list-vectors.dto'
 import { NormalizeDto } from './dto/normalize.dto'
 import { ConversationService } from '../conversation/conversation.service'
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston'
+import { MessageRole } from '../conversation/dto/chat.dto'
 import { BatchCreateVectorDto } from './dto/batch-create-vector.dto'
 import { BatchUpdateVectorDto } from './dto/batch-update-vector.dto'
 import { BatchDeleteVectorDto } from './dto/batch-delete-vector.dto'
@@ -239,11 +240,11 @@ export class VectorService {
         model: this.configService.get('OPENAI_API_MODEL') || 'gpt-4o',
         messages: [
           {
-            role: 'system' as const,
+            role: MessageRole.system,
             content: this.normalizeSystemPrompt,
           },
           {
-            role: 'user' as const,
+            role: MessageRole.user,
             content: userContent,
           },
         ],
