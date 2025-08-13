@@ -333,7 +333,7 @@ ${content}
 
       // 使用 zodResponseFormat 进行结构化输出
       const completion = await this.openai.chat.completions.parse({
-        model: this.configService.get('OPENAI_API_MODEL') || 'gpt-4o-2024-08-06',
+        model: this.configService.get('OPENAI_API_MODEL_2') || 'gpt-4o-2024-08-06',
         messages: [
           {
             role: 'system',

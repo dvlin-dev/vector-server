@@ -45,7 +45,10 @@ export class MessageSummaryService {
     const messageCount = await this.prisma.message.count({
       where: {
         conversationId,
-        isSummary: false,
+        OR: [
+          { isSummary: false },
+          { isSummary: null }
+        ],
         role: { in: ['user', 'assistant'] }, // 只统计用户和助手的消息，排除系统消息
       },
     })
@@ -62,7 +65,10 @@ export class MessageSummaryService {
       const messagesAfterLastSummary = await this.prisma.message.count({
         where: {
           conversationId,
-          isSummary: false,
+          OR: [
+            { isSummary: false },
+            { isSummary: null }
+          ],
           role: { in: ['user', 'assistant'] },
           createdAt: { gt: lastSummary.createdAt },
         },
@@ -101,7 +107,10 @@ export class MessageSummaryService {
       const messagesToSummarize = await this.prisma.message.findMany({
         where: {
           conversationId,
-          isSummary: false,
+          OR: [
+            { isSummary: false },
+            { isSummary: null }
+          ],
           role: { in: ['user', 'assistant'] },
           ...(lastSummary ? { createdAt: { gt: lastSummary.createdAt } } : {}),
         },
@@ -199,7 +208,6 @@ ${conversationHistory}
   async getContextMessages(conversationId: string): Promise<OpenAI.Chat.Completions.ChatCompletionMessageParam[]> {
     const lastSummary = await this.getLastSummaryMessage(conversationId)
     const contextMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = []
-
     if (lastSummary) {
       // 添加总结作为上下文
       contextMessages.push({
@@ -211,7 +219,10 @@ ${conversationHistory}
       const recentMessages = await this.prisma.message.findMany({
         where: {
           conversationId,
-          isSummary: false,
+          OR: [
+            { isSummary: false },
+            { isSummary: null }
+          ],
           createdAt: { gt: lastSummary.createdAt },
         },
         orderBy: {
@@ -232,7 +243,10 @@ ${conversationHistory}
       const recentMessages = await this.prisma.message.findMany({
         where: {
           conversationId,
-          isSummary: false,
+          OR: [
+            { isSummary: false },
+            { isSummary: null }
+          ],
         },
         orderBy: {
           createdAt: 'asc',

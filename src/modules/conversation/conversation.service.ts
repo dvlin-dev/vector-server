@@ -152,7 +152,7 @@ export class ConversationService {
 
       // 3. 获取优化后的上下文消息（使用总结+最近消息）
       const contextMessages = await this.messageSummaryService.getContextMessages(conversationId)
-      
+
       const systemMessage: OpenAI.Chat.Completions.ChatCompletionMessageParam = {
         role: 'system',
         content: this.systemPrompt,
@@ -166,7 +166,7 @@ export class ConversationService {
 
       // 4. 使用 OpenAI API 发送流式请求
       const response = await this.openai.chat.completions.create({
-        model: this.configService.get('OPENAI_API_MODEL') || 'gpt-4o',
+        model: this.configService.get('OPENAI_API_MODEL_2') || 'gpt-4o',
         messages: openaiMessages,
         temperature: 0.6,
         stream: true,
@@ -324,6 +324,7 @@ export class ConversationService {
         conversationId,
         content,
         role,
+        isSummary: false,
         createdAt: new Date(),
       },
     })
