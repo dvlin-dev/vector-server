@@ -22,7 +22,6 @@ const schema = Joi.object({
   LOG_ON: Joi.boolean(),
   LOG_LEVEL: Joi.string(),
   SYSTEM_PROMPT: Joi.string(),
-  NORMALIZE_SYSTEM_PROMPT: Joi.string().required(),
 })
 
 @Global()

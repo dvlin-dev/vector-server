@@ -10,7 +10,6 @@ export enum ConfigEnum {
   SECRET = 'SECRET',
 
   SYSTEM_PROMPT = 'SYSTEM_PROMPT',
-  NORMALIZE_SYSTEM_PROMPT = 'NORMALIZE_SYSTEM_PROMPT',
 }
 
 export enum LogEnum {

@@ -19,10 +19,10 @@ import { MessageRole } from '../conversation/dto/chat.dto'
 import { BatchCreateVectorDto } from './dto/batch-create-vector.dto'
 import { BatchUpdateVectorDto } from './dto/batch-update-vector.dto'
 import { BatchDeleteVectorDto } from './dto/batch-delete-vector.dto'
+import { getNormalizeUserPrompt, normalizeSystemPrompt } from 'src/utils/llm/prompt'
 
 @Injectable()
 export class VectorService {
-  private normalizeSystemPrompt: string
   constructor(
     private prisma: PrismaService,
     private prismaVector: PrismaVectorService,
@@ -30,10 +30,7 @@ export class VectorService {
     private conversationService: ConversationService,
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService
-  ) {
-    this.normalizeSystemPrompt = this.configService.get('NORMALIZE_SYSTEM_PROMPT')
-    this.logger.log('NORMALIZE_SYSTEM_PROMPT', this.normalizeSystemPrompt);
-  }
+  ) {}
  
   get(id: string) {
     return this.prismaVector.index.findUnique({
@@ -235,21 +232,16 @@ export class VectorService {
     
     // 创建并发请求的 Promise 数组
     const promises = list.map(async (section) => {
-      const userContent = `
-        ${webInfo}
-        ${section.sectionInfo}
-      `
-
       const request = {
         model: this.configService.get('OPENAI_API_MODEL') || 'gpt-4o',
         messages: [
           {
             role: MessageRole.system,
-            content: this.normalizeSystemPrompt,
+            content: normalizeSystemPrompt,
           },
           {
             role: MessageRole.user,
-            content: userContent,
+            content: getNormalizeUserPrompt(webInfo, section.sectionInfo),
           },
         ],
         temperature: 0.6,
