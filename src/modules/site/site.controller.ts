@@ -47,51 +47,42 @@ export class SiteController {
     return this.siteService.findAllSites();
   }
 
-  @Get(':id')
-  @ApiOperation({ summary: '根据ID获取站点详情' })
-  @ApiParam({ name: 'id', description: '站点UUID' })
-  @ApiResponse({ status: 200, description: '获取站点详情成功' })
-  @ApiResponse({ status: 404, description: '站点不存在' })
-  findOneSite(@Param('id') id: string) {
-    return this.siteService.findOneSite(id);
-  }
-
-  @Get('external/:siteId')
-  @ApiOperation({ summary: '根据外部平台ID获取站点详情' })
+  @Get(':siteId')
+  @ApiOperation({ summary: '根据站点ID获取站点详情' })
   @ApiParam({ name: 'siteId', description: '外部平台站点ID' })
   @ApiResponse({ status: 200, description: '获取站点详情成功' })
   @ApiResponse({ status: 404, description: '站点不存在' })
-  findSiteBySiteId(@Param('siteId') siteId: string) {
+  findOneSite(@Param('siteId') siteId: string) {
     return this.siteService.findSiteBySiteId(siteId);
   }
 
-  @Patch(':id')
+  @Patch(':siteId')
   @ApiOperation({ summary: '更新站点信息' })
-  @ApiParam({ name: 'id', description: '站点UUID' })
+  @ApiParam({ name: 'siteId', description: '外部平台站点ID' })
   @ApiResponse({ status: 200, description: '站点更新成功' })
   @ApiResponse({ status: 404, description: '站点不存在' })
   @ApiResponse({ status: 409, description: '站点ID已存在' })
-  updateSite(@Param('id') id: string, @Body() updateSiteDto: UpdateSiteDto) {
-    return this.siteService.updateSite(id, updateSiteDto);
+  updateSite(@Param('siteId') siteId: string, @Body() updateSiteDto: UpdateSiteDto) {
+    return this.siteService.updateSiteBySiteId(siteId, updateSiteDto);
   }
 
-  @Delete(':id')
+  @Delete(':siteId')
   @ApiOperation({ summary: '删除站点' })
-  @ApiParam({ name: 'id', description: '站点UUID' })
+  @ApiParam({ name: 'siteId', description: '外部平台站点ID' })
   @ApiResponse({ status: 200, description: '站点删除成功' })
   @ApiResponse({ status: 404, description: '站点不存在' })
   @HttpCode(HttpStatus.OK)
-  removeSite(@Param('id') id: string) {
-    return this.siteService.removeSite(id);
+  removeSite(@Param('siteId') siteId: string) {
+    return this.siteService.removeSiteBySiteId(siteId);
   }
 
-  @Get(':id/stats')
+  @Get(':siteId/stats')
   @ApiOperation({ summary: '获取站点统计信息' })
-  @ApiParam({ name: 'id', description: '站点UUID' })
+  @ApiParam({ name: 'siteId', description: '外部平台站点ID' })
   @ApiResponse({ status: 200, description: '获取统计信息成功' })
   @ApiResponse({ status: 404, description: '站点不存在' })
-  getSiteStats(@Param('id') id: string) {
-    return this.siteService.getSiteStats(id);
+  getSiteStats(@Param('siteId') siteId: string) {
+    return this.siteService.getSiteStats(siteId);
   }
 
   @Post('summarize')
