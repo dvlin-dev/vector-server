@@ -14,6 +14,7 @@ import { Readable } from 'stream'
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston'
 import { VectorService } from '../vector/vector.service'
 import { systemPrompt } from 'src/utils/llm/prompt'
+import { tools } from 'src/utils/llm/tool'
 
 @Injectable()
 export class ConversationService {
@@ -167,30 +168,6 @@ export class ConversationService {
 
       const isGpt5 = this.configService.get('OPENAI_API_MODEL_2')?.includes('gpt-5');
       
-      // 定义 function tool
-      const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [{
-        type: 'function',
-        function: {
-          name: 'extract_unanswerable_question',
-          description: '当背景信息不足以回答用户问题时，提取用户的核心问题',
-          parameters: {
-            type: 'object',
-            properties: {
-              question: {
-                type: 'string',
-                description: '用户的核心问题，精炼且清晰'
-              },
-              type: {
-                type: 'string',
-                description: '用户的问题类型，例如：产品咨询、售后服务、价格咨询、其他等'
-              }
-            },
-            required: ['question', 'type']
-          }
-        }
-      }];
-      
-      // 4. 使用 OpenAI API 发送流式请求
       const response = await this.openai.chat.completions.create({
         model: this.configService.get('OPENAI_API_MODEL_2') || 'gpt-4o',
         messages: openaiMessages,
