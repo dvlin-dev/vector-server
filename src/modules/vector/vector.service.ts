@@ -161,6 +161,7 @@ export class VectorService {
             metadata: {
               ...article['metadata'],
               siteId: article['siteId'],
+              sectionId: article['sectionId'],
               _distance: 1 - article._distance,
             },
           })

@@ -286,19 +286,33 @@ export class ConversationService {
 
     const reference = await this.vectorService.similaritySearch({
       message: lastestUserMessage.content as string,
-      size: 1,
+      size: 3,
       siteId,
     })
 
     const referenceContent = `
 <参考背景>
-${reference.map(item => item.pageContent).join('\n')}
+${reference.map(item => `<${item.metadata.sectionName}>
+<content>
+${item.pageContent}
+</content>
+<pageId>
+${item.metadata.pageId}
+</pageId>
+<sectionId>
+${item.metadata.sectionId}
+</sectionId>
+</${item.metadata.sectionName}>`).join('\n')}
 </参考背景>
 
 <用户问题>
 ${lastestUserMessage.content}
 </用户问题>
 `
+
+// console.info('reference', reference)
+console.info('referenceContent', referenceContent)
+
     const addReferenceUserMessages = {
       role: 'user',
       content: referenceContent,
