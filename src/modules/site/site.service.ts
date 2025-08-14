@@ -178,10 +178,16 @@ export class SiteService {
   // Ticket 相关方法
   async createTicket(createTicketDto: CreateTicketDto) {
     // 检查站点是否存在
-    await this.findOneSite(createTicketDto.siteId);
+    const site = await this.findSiteBySiteId(createTicketDto.siteId);
 
     return await this.prisma.ticket.create({
-      data: createTicketDto,
+      data: {
+        content: createTicketDto.content,
+        visitorEmail: createTicketDto.visitorEmail,
+        type: createTicketDto.type,
+        siteId: site.id,
+        status: TicketStatus.PENDING
+      },
       include: {
         site: true
       }
