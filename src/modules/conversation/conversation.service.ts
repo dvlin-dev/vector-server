@@ -251,10 +251,10 @@ export class ConversationService {
             const toolCallData = JSON.parse(toolCallArguments);
             // 发送工具调用结果到客户端
             res.write(`data: ${JSON.stringify({ 
-              tool_call: {
+              content:{ tool_call: {
                 name: toolCallName,
                 arguments: toolCallData
-              }
+              }}
             })}\n\n`);
             
           } catch (parseError) {
