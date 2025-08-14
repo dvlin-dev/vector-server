@@ -13,6 +13,7 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import OpenAI from 'openai';
 import { zodResponseFormat } from 'openai/helpers/zod';
 import { z } from 'zod';
+import { getSiteSummaryUserPrompt, siteSummarySystemPrompt } from 'src/utils/llm/prompt';
 
 @Injectable()
 export class SiteService {
@@ -123,10 +124,45 @@ export class SiteService {
     }
   }
 
+  async updateSiteBySiteId(siteId: string, updateSiteDto: UpdateSiteDto) {
+    try {
+      const site = await this.prisma.site.update({
+        where: { siteId },
+        data: updateSiteDto,
+        include: {
+          tickets: true
+        }
+      });
+      return site;
+    } catch (error) {
+      if (error.code === 'P2025') {
+        throw new NotFoundException('站点不存在');
+      }
+      if (error.code === 'P2002') {
+        throw new ConflictException('站点ID已存在');
+      }
+      throw error;
+    }
+  }
+
   async removeSite(id: string) {
     try {
       await this.prisma.site.delete({
         where: { id }
+      });
+      return { message: '站点删除成功' };
+    } catch (error) {
+      if (error.code === 'P2025') {
+        throw new NotFoundException('站点不存在');
+      }
+      throw error;
+    }
+  }
+
+  async removeSiteBySiteId(siteId: string) {
+    try {
+      await this.prisma.site.delete({
+        where: { siteId }
       });
       return { message: '站点删除成功' };
     } catch (error) {
@@ -287,21 +323,16 @@ export class SiteService {
    */
   private async generateSiteSummary(content: string): Promise<string | null> {
     try {
-      const summaryPrompt = `请根据以下内容为网站生成一个简洁明了的描述总结，描述应该包含网站的主要功能、服务或特色，长度控制在100字以内：
-
-${content}
-
-请生成一个专业、准确、简洁的网站描述总结。`;
 
       const response = await this.conversationService.completions({
         messages: [
           {
             role: MessageRole.system,
-            content: '你是一个专业的网站内容分析助手，能够准确提取网站的核心信息并生成简洁明了的描述总结。'
+            content: siteSummarySystemPrompt
           },
           {
             role: MessageRole.user, 
-            content: summaryPrompt
+            content: getSiteSummaryUserPrompt(content)
           }
         ],
         model:  this.configService.get('OPENAI_API_MODEL') || 'moonshotai/kimi-k2-instruct',
