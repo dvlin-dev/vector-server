@@ -109,9 +109,12 @@ export class VectorService {
   }
 
   async similaritySearch(searchVectorDto: SearchVectorDto) {
-    const { message, size } = searchVectorDto
+    const { message, size, siteId } = searchVectorDto
 
-    const docs = await this.customSimilaritySearchVectorWithScore(message, Number(size))
+    // 构建 siteId 筛选的 SQL
+    const filterSql = siteId ? Prisma.sql`WHERE "siteId" = ${siteId}` : undefined
+
+    const docs = await this.customSimilaritySearchVectorWithScore(message, Number(size), filterSql)
     return docs
   }
 
@@ -159,6 +162,7 @@ export class VectorService {
             pageContent: article['content'],
             metadata: {
               ...article['metadata'],
+              siteId: article['siteId'],
               _distance: 1 - article._distance,
             },
           })
