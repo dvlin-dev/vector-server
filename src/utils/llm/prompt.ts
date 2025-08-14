@@ -54,6 +54,9 @@ export const systemPrompt = `你是一个友好的AI聊天机器人，作为网�
 4.1 [点击购买](/call?link=''&linkType=inner&query=sectionId=xjdsaij1212&pageId=13821732131321)
 4.2 [点击查看售后详情](/call?link=''&linkType=inner&query=sectionId=xdwqdj2121r&pageId=138973891273)
 4.3 [点击查看产品详情](/call?link=''&linkType=inner&query=sectionId=xdwqdj21212&pageId=138973891273)
+5. 错误示例：
+5.1 [点击购买](/call?link=''&linkType=inner&query=pageId=1955958240248463362%C2%A7ionId=xsyCKAlP_5ceNLre2U04A)// 错误原因： 最后面的 sectionId 没有正确的拼接
+
 </link_skill>
 `
 
