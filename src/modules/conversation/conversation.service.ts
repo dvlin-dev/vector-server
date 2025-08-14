@@ -13,11 +13,11 @@ import { Response } from 'express'
 import { Readable } from 'stream'
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston'
 import { VectorService } from '../vector/vector.service'
+import { systemPrompt } from 'src/utils/llm/prompt'
 
 @Injectable()
 export class ConversationService {
   private openai: OpenAI
-  private systemPrompt: string
 
   constructor(
     private prisma: PrismaService,
@@ -28,9 +28,6 @@ export class ConversationService {
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService
   ) {
-    this.systemPrompt = this.configService.get('SYSTEM_PROMPT')
-    this.logger.log('SYSTEM_PROMPT', this.systemPrompt);
-
     const keyConfiguration = getKeyConfigurationFromEnvironment(this.configService)
 
     // 初始化 OpenAI 客户端
@@ -109,7 +106,7 @@ export class ConversationService {
       const { messages, model, temperature } = request
       const systemMessage: OpenAI.Chat.Completions.ChatCompletionMessageParam = {
         role: 'system',
-        content: this.systemPrompt,
+        content: systemPrompt,
       }
       const openaiMessages = [
         systemMessage,
@@ -158,7 +155,7 @@ export class ConversationService {
 
       const systemMessage: OpenAI.Chat.Completions.ChatCompletionMessageParam = {
         role: 'system',
-        content: this.systemPrompt,
+        content: systemPrompt,
       }
 
       const referenceMessages = await this.getReferenceMessages(siteId, contextMessages)
@@ -243,9 +240,14 @@ export class ConversationService {
       siteId,
     })
 
-    const referenceContent = `参考背景
+    const referenceContent = `
+<参考背景>
 ${reference.map(item => item.pageContent).join('\n')}
-用户问题: ${lastestUserMessage.content}
+</参考背景>
+
+<用户问题>
+${lastestUserMessage.content}
+</用户问题>
 `
     const addReferenceUserMessages = {
       role: 'user',

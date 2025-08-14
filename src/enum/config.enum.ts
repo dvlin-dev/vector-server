@@ -8,8 +8,6 @@ export enum ConfigEnum {
   DB_SYNC = 'DB_SYNC',
 
   SECRET = 'SECRET',
-
-  SYSTEM_PROMPT = 'SYSTEM_PROMPT',
 }
 
 export enum LogEnum {

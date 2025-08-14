@@ -21,7 +21,6 @@ const schema = Joi.object({
   DB_SYNC: Joi.boolean().default(false),
   LOG_ON: Joi.boolean(),
   LOG_LEVEL: Joi.string(),
-  SYSTEM_PROMPT: Joi.string(),
 })
 
 @Global()
