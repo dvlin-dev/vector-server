@@ -273,43 +273,84 @@ export class VectorService {
     const keyConfiguration = getKeyConfigurationFromEnvironment(this.configService)
     
     try {
-      // 并行创建所有向量记录
-      const createdVectors = await Promise.all(
+      // 收集所有 sectionId 并检查是否已存在
+      const sectionIds = vectors.map(v => v.sectionId).filter(Boolean)
+      const existingVectors = sectionIds.length > 0 
+        ? await this.prismaVector.index.findMany({
+            where: {
+              sectionId: {
+                in: sectionIds
+              }
+            }
+          })
+        : []
+
+      // 创建已存在的 sectionId 映射
+      const existingBySectionId = new Map(
+        existingVectors.map(v => [v.sectionId, v])
+      )
+
+      let createdCount = 0
+      let updatedCount = 0
+
+      // 并行处理所有向量记录（创建或更新）
+      const processedVectors = await Promise.all(
         vectors.map(async (vectorDto) => {
           const { content, metadata, siteId, sectionId } = vectorDto
-          
-          return this.prismaVector.index.create({
-            data: {
-              content,
-              metadata,
-              siteId,
-              sectionId,
-            },
-          })
+          const existingVector = sectionId ? existingBySectionId.get(sectionId) : null
+
+          if (existingVector) {
+            // 更新已存在的记录
+            const updatedVector = await this.prismaVector.index.update({
+              where: { id: existingVector.id },
+              data: {
+                content,
+                metadata,
+                siteId,
+                sectionId,
+              },
+            })
+            updatedCount++
+            return { vector: updatedVector, isUpdate: true }
+          } else {
+            // 创建新记录
+            const createdVector = await this.prismaVector.index.create({
+              data: {
+                content,
+                metadata,
+                siteId,
+                sectionId,
+              },
+            })
+            createdCount++
+            return { vector: createdVector, isUpdate: false }
+          }
         })
       )
 
       // 并行计算并更新所有向量的嵌入
       await Promise.all(
-        createdVectors.map(async (createdVector, index) => {
+        processedVectors.map(async (processedVector, index) => {
           const vector = await getEmbeddings(keyConfiguration).embedQuery(vectors[index].content)
           const vectorString = `[${vector.join(',')}]`
           
           await this.prismaVector.$executeRaw`
             UPDATE "Index"
             SET "vector" = ${vectorString}::vector
-            WHERE "id" = ${createdVector.id}
+            WHERE "id" = ${processedVector.vector.id}
           `
         })
       )
 
       return {
         success: true,
-        created: createdVectors.length,
-        data: createdVectors,
+        created: createdCount,
+        updated: updatedCount,
+        total: processedVectors.length,
+        data: processedVectors.map(p => p.vector),
       }
     } catch (error) {
-      this.logger.error('批量创建向量失败:', error)
+      this.logger.error('批量创建/更新向量失败:', error)
       throw error
     }
   }
