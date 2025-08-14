@@ -13,7 +13,7 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import OpenAI from 'openai';
 import { zodResponseFormat } from 'openai/helpers/zod';
 import { z } from 'zod';
-import { getSiteSummaryUserPrompt, siteSummarySystemPrompt } from 'src/utils/llm/prompt';
+import { getQuestionsUserPrompt, getSiteSummaryUserPrompt, questionsSystemPrompt, siteSummarySystemPrompt } from 'src/utils/llm/prompt';
 import { VectorService } from '../vector/vector.service';
 
 @Injectable()
@@ -381,32 +381,20 @@ export class SiteService {
 
       type QuestionsType = z.infer<typeof QuestionsSchema>;
 
-      const questionsPrompt = `根据以下网站信息和特定区块内容，生成3个访问者浏览该网站时可能想要了解的问题。这些问题应该：
-1. 与网站内容和区块内容密切相关
-2. 帮助用户更好地了解网站的服务或产品
-3. 具有实际的参考价值
+      const questionsPrompt = getQuestionsUserPrompt(siteDescription, sectionContent);
 
-网站信息：
-网站描述: ${siteDescription}
-
-区块内容：
-${sectionContent}
-
-请根据上述信息生成3个具体的、有价值的问题。`;
-
-      console.info('questionsPrompt', questionsPrompt)
       const isGpt5 = this.configService.get('OPENAI_API_MODEL')?.includes('gpt-5');
 
       // 使用 zodResponseFormat 进行结构化输出
       const completion = await this.openai.chat.completions.parse({
-        model: this.configService.get('OPENAI_API_MODEL') || 'gpt-4o-2024-08-06',
+        model: this.configService.get('OPENAI_API_MODEL_2') || 'gpt-4o-2024-08-06',
         messages: [
           {
-            role: 'system',
-            content: '你是一个专业的内容分析师，能够根据网站信息和特定区块内容生成用户可能感兴趣的问题。生成的问题应该具体、有价值、与内容相关。'
+            role: MessageRole.system,
+            content: questionsSystemPrompt
           },
           {
-            role: 'user',
+            role: MessageRole.user,
             content: questionsPrompt
           }
         ],
@@ -419,7 +407,6 @@ ${sectionContent}
 
       const result = completion.choices[0]?.message?.parsed as QuestionsType;
       
-      console.info('result', result)
       if (result && result.questions) {
         return { list: result.questions };
       }
