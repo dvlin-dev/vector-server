@@ -49,7 +49,7 @@ export const systemPrompt = `你是一个友好的AI聊天机器人，作为网�
  2.2 linkType: 始终保持 inner
  2.3 pageId: 区块背景里面提供的 pageId
  2.4 sectionId: 区块背景里面提供的 sectionId
-3. 你需要填中的只有{引导跳转的文案}、{页面ID}、{区块ID}，其他的值都按照上面格式不要动。
+3. 你需要填中的只有{引导跳转的文案}、{sectionId}、{pageId}，其他的值都按照上面格式不要动。
 4. 正确示例：
 4.1 [点击购买](/call?link=''&linkType=inner&query=sectionId=xjdsaij1212&pageId=13821732131321)
 4.2 [点击查看售后详情](/call?link=''&linkType=inner&query=sectionId=xdwqdj2121r&pageId=138973891273)
