@@ -3,12 +3,20 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class GenerateQuestionsDto {
   @ApiProperty({
-    description: '网站内容，用于生成问题',
-    example: '这是一个电商网站，主要销售电子产品，包括手机、笔记本电脑、平板电脑等。我们提供优质的产品和服务。'
+    description: '网站ID，用于获取网站信息',
+    example: 'site-123'
   })
   @IsString()
   @IsNotEmpty()
-  content: string;
+  siteId: string;
+
+  @ApiProperty({
+    description: '区块ID，用于获取特定区块的向量数据',
+    example: 'section-456'
+  })
+  @IsString()
+  @IsNotEmpty()
+  sectionId: string;
 }
 
 export interface GenerateQuestionsResponse {

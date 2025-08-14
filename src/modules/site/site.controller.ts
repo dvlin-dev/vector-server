@@ -95,10 +95,10 @@ export class SiteController {
   }
 
   @Post('generate-questions')
-  @ApiOperation({ summary: '生成访问网站时可能想问的问题' })
+  @ApiOperation({ summary: '根据网站区块信息生成访问网站时可能想问的问题' })
   @ApiResponse({ 
     status: 200, 
-    description: '问题生成成功',
+    description: '基于网站信息和区块内容成功生成问题',
     schema: {
       type: 'object',
       properties: {
@@ -118,6 +118,7 @@ export class SiteController {
       }
     }
   })
+  @ApiResponse({ status: 404, description: '网站或区块不存在' })
   @ApiResponse({ status: 500, description: 'AI问题生成失败' })
   generateQuestions(@Body() generateQuestionsDto: GenerateQuestionsDto): Promise<GenerateQuestionsResponse> {
     return this.siteService.generateQuestions(generateQuestionsDto);

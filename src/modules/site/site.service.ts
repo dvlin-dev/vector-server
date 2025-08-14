@@ -14,6 +14,7 @@ import OpenAI from 'openai';
 import { zodResponseFormat } from 'openai/helpers/zod';
 import { z } from 'zod';
 import { getSiteSummaryUserPrompt, siteSummarySystemPrompt } from 'src/utils/llm/prompt';
+import { VectorService } from '../vector/vector.service';
 
 @Injectable()
 export class SiteService {
@@ -23,6 +24,7 @@ export class SiteService {
     private readonly prisma: PrismaService,
     private readonly conversationService: ConversationService,
     private readonly configService: ConfigService,
+    private readonly vectorService: VectorService,
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService
   ) {
@@ -350,9 +352,28 @@ export class SiteService {
    * 生成访问网站时可能想问的问题
    */
   async generateQuestions(generateQuestionsDto: GenerateQuestionsDto): Promise<{ list: string[] }> {
-    const { content } = generateQuestionsDto;
+    const { siteId, sectionId } = generateQuestionsDto;
 
     try {
+      // 1. 通过 vectorService.list 获取区块的向量数据信息
+      const vectorData = await this.vectorService.list({
+        siteId,
+        sectionId,
+        page: 1,
+        pageSize: 1
+      });
+
+      // 2. 通过 siteId 获取网站信息
+      const siteInfo = await this.findSiteBySiteId(siteId);
+      const siteDescription = siteInfo.description;
+
+      // 3. 整合区块信息和网站信息
+      const sectionContent = vectorData.items[0].content;
+      
+      if (!sectionContent.trim()) {
+        throw new Error('未找到相关的区块内容');
+      }
+
       // 定义 Zod schema 用于结构化输出
       const QuestionsSchema = z.object({
         questions: z.array(z.string()).describe("生成的3个问题列表")
@@ -360,25 +381,29 @@ export class SiteService {
 
       type QuestionsType = z.infer<typeof QuestionsSchema>;
 
-      const questionsPrompt = `根据以下网站内容，生成3个访问者浏览该网站时可能想要了解的问题。这些问题应该：
-1. 与网站内容密切相关
+      const questionsPrompt = `根据以下网站信息和特定区块内容，生成3个访问者浏览该网站时可能想要了解的问题。这些问题应该：
+1. 与网站内容和区块内容密切相关
 2. 帮助用户更好地了解网站的服务或产品
 3. 具有实际的参考价值
 
-网站内容：
-${content}
+网站信息：
+网站描述: ${siteDescription}
 
-请生成3个具体的、有价值的问题。`;
+区块内容：
+${sectionContent}
 
-      const isGpt5 = this.configService.get('OPENAI_API_MODEL_2')?.includes('gpt-5');
+请根据上述信息生成3个具体的、有价值的问题。`;
+
+      console.info('questionsPrompt', questionsPrompt)
+      const isGpt5 = this.configService.get('OPENAI_API_MODEL')?.includes('gpt-5');
 
       // 使用 zodResponseFormat 进行结构化输出
       const completion = await this.openai.chat.completions.parse({
-        model: this.configService.get('OPENAI_API_MODEL_2') || 'gpt-4o-2024-08-06',
+        model: this.configService.get('OPENAI_API_MODEL') || 'gpt-4o-2024-08-06',
         messages: [
           {
             role: 'system',
-            content: '你是一个专业的内容分析师，能够根据网站内容生成用户可能感兴趣的问题。生成的问题应该具体、有价值、与内容相关。'
+            content: '你是一个专业的内容分析师，能够根据网站信息和特定区块内容生成用户可能感兴趣的问题。生成的问题应该具体、有价值、与内容相关。'
           },
           {
             role: 'user',
@@ -394,6 +419,7 @@ ${content}
 
       const result = completion.choices[0]?.message?.parsed as QuestionsType;
       
+      console.info('result', result)
       if (result && result.questions) {
         return { list: result.questions };
       }
@@ -408,7 +434,7 @@ ${content}
         list: [
           'What is the main function of this website?',
           'How to use the services of this website?',
-          'What are the features or advantages of this website?'
+          'What are the special features of this website?'
         ]
       };
     }
