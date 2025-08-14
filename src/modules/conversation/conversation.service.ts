@@ -165,8 +165,6 @@ export class ConversationService {
         ...referenceMessages,
       ]
 
-      console.info('openaiMessages', openaiMessages)
-
       const isGpt5 = this.configService.get('OPENAI_API_MODEL_2')?.includes('gpt-5');
       
       // 定义 function tool
