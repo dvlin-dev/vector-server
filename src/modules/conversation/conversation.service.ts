@@ -13,7 +13,6 @@ import { Response } from 'express'
 import { Readable } from 'stream'
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston'
 import { VectorService } from '../vector/vector.service'
-import { systemPrompt } from 'src/utils/llm/prompt'
 import { tools } from 'src/utils/llm/tool'
 
 @Injectable()
@@ -107,7 +106,7 @@ export class ConversationService {
       const { messages, model, temperature } = request
       const systemMessage: OpenAI.Chat.Completions.ChatCompletionMessageParam = {
         role: 'system',
-        content: systemPrompt,
+        content: this.configService.get('SYSTEM_PROMPT'),
       }
       const openaiMessages = [
         systemMessage,
@@ -154,6 +153,7 @@ export class ConversationService {
       // 3. 获取优化后的上下文消息（使用总结+最近消息）
       const contextMessages = await this.messageSummaryService.getContextMessages(conversationId)
 
+      const systemPrompt = this.configService.get('SYSTEM_PROMPT')
       const systemMessage: OpenAI.Chat.Completions.ChatCompletionMessageParam = {
         role: 'system',
         content: systemPrompt,
@@ -309,9 +309,6 @@ ${item.metadata.sectionId}
 ${lastestUserMessage.content}
 </用户问题>
 `
-
-// console.info('reference', reference)
-console.info('referenceContent', referenceContent)
 
     const addReferenceUserMessages = {
       role: 'user',
