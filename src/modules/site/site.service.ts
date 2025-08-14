@@ -198,7 +198,18 @@ export class SiteService {
     const where: any = {};
     
     if (siteId) {
-      where.siteId = siteId;
+      // 先查找对应的site记录，获取其内部id
+      const site = await this.prisma.site.findUnique({
+        where: { siteId }
+      });
+      
+      // 如果找到了site，使用其id作为查询条件
+      if (site) {
+        where.siteId = site.id;
+      } else {
+        // 如果找不到对应的site，返回空数组
+        return [];
+      }
     }
     
     if (status && Object.values(TicketStatus).includes(status)) {
