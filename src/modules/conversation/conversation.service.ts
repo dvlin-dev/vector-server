@@ -1,4 +1,4 @@
-import { Inject, Injectable, LoggerService } from '@nestjs/common'
+import { Inject, Injectable, LoggerService, forwardRef } from '@nestjs/common'
 import { CreateConversationDto } from './dto/create-conversation.dto'
 import { PrismaService } from 'src/utils/prisma/prisma.service'
 import { getKeyConfigurationFromEnvironment } from 'src/utils/llm/configuration'
@@ -12,6 +12,7 @@ import { MessageSummaryService } from './message-summary.service'
 import { Response } from 'express'
 import { Readable } from 'stream'
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston'
+import { VectorService } from '../vector/vector.service'
 
 @Injectable()
 export class ConversationService {
@@ -22,6 +23,8 @@ export class ConversationService {
     private prisma: PrismaService,
     private configService: ConfigService,
     private messageSummaryService: MessageSummaryService,
+    @Inject(forwardRef(() => VectorService))
+    private vectorService: VectorService,
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService
   ) {
@@ -132,7 +135,7 @@ export class ConversationService {
   }
 
   async completionsStream(completionsDto: CompletionsDto, res: Response) {
-    const { messages, conversationId } = completionsDto
+    const { messages, conversationId, siteId } = completionsDto
 
     // 1. 保存用户发送的最后一条消息到数据库
     const lastUserMessage = messages[messages.length - 1]
@@ -158,11 +161,14 @@ export class ConversationService {
         content: this.systemPrompt,
       }
 
+      const referenceMessages = await this.getReferenceMessages(siteId, contextMessages)
       // 使用优化后的上下文，而不是传入的所有消息
       const openaiMessages = [
         systemMessage,
-        ...contextMessages,
+        ...referenceMessages,
       ]
+
+      console.info('openaiMessages', openaiMessages)
 
       const isGpt5 = this.configService.get('OPENAI_API_MODEL_2')?.includes('gpt-5');
       // 4. 使用 OpenAI API 发送流式请求
@@ -221,6 +227,32 @@ export class ConversationService {
 
       throw error
     }
+  }
+
+  private async getReferenceMessages(siteId: string, contextMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[]): Promise<OpenAI.Chat.Completions.ChatCompletionMessageParam[]> {
+    if (!siteId) {
+      return contextMessages
+    }
+
+    const lastestUserMessage = contextMessages[contextMessages.length - 1];
+    const remainingMessages = contextMessages.slice(0, -1);
+
+    const reference = await this.vectorService.similaritySearch({
+      message: lastestUserMessage.content as string,
+      size: 1,
+      siteId,
+    })
+
+    const referenceContent = `参考背景
+${reference.map(item => item.pageContent).join('\n')}
+用户问题: ${lastestUserMessage.content}
+`
+    const addReferenceUserMessages = {
+      role: 'user',
+      content: referenceContent,
+    } as OpenAI.Chat.Completions.ChatCompletionUserMessageParam
+    
+    return [...remainingMessages, addReferenceUserMessages]
   }
 
   /**

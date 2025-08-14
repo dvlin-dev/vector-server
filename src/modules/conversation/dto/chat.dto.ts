@@ -28,6 +28,11 @@ export class CompletionsDto {
   @IsNotEmpty()
   @IsString()
   conversationId: string
+
+  @ApiProperty({ description: '站点ID（可选）', required: false })
+  @IsString()
+  @IsOptional()
+  siteId?: string
 }
 
 

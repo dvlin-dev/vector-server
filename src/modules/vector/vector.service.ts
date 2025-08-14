@@ -1,4 +1,4 @@
-import { Inject, Injectable, LoggerService } from '@nestjs/common'
+import { Inject, Injectable, LoggerService, forwardRef } from '@nestjs/common'
 import { CreateVectorDto } from './dto/create-vector.dto'
 import { SearchVectorDto } from './dto/search.dto'
 import { getKeyConfigurationFromEnvironment } from '../../utils/llm/configuration'
@@ -27,6 +27,7 @@ export class VectorService {
     private prisma: PrismaService,
     private prismaVector: PrismaVectorService,
     private configService: ConfigService,
+    @Inject(forwardRef(() => ConversationService))
     private conversationService: ConversationService,
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService
