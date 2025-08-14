@@ -61,6 +61,7 @@ export class ConversationService {
       apiModel: keyConfiguration.apiModel,
       basePath: keyConfiguration.basePath,
     })
+    console.info('SYSTEM_PROMPT', this.configService.get('SYSTEM_PROMPT'))
   }
 
   get(id: string) {
