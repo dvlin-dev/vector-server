@@ -164,12 +164,16 @@ export class ConversationService {
         ...contextMessages,
       ]
 
+      const isGpt5 = this.configService.get('OPENAI_API_MODEL_2')?.includes('gpt-5');
       // 4. 使用 OpenAI API 发送流式请求
       const response = await this.openai.chat.completions.create({
         model: this.configService.get('OPENAI_API_MODEL_2') || 'gpt-4o',
         messages: openaiMessages,
-        temperature: 0.6,
         stream: true,
+        ...(isGpt5 ? {
+          verbosity: "low",
+          reasoning_effort: "minimal"
+        }:{})
       })
 
       // 存储完整的响应

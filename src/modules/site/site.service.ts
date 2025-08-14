@@ -339,6 +339,8 @@ ${content}
 
 请生成3个具体的、有价值的问题。`;
 
+      const isGpt5 = this.configService.get('OPENAI_API_MODEL_2')?.includes('gpt-5');
+
       // 使用 zodResponseFormat 进行结构化输出
       const completion = await this.openai.chat.completions.parse({
         model: this.configService.get('OPENAI_API_MODEL_2') || 'gpt-4o-2024-08-06',
@@ -353,7 +355,10 @@ ${content}
           }
         ],
         response_format: zodResponseFormat(QuestionsSchema as any, "questions_response"),
-        temperature: 0.3,
+        ...(isGpt5 ? {
+          verbosity: "low",
+          reasoning_effort: "minimal"
+        }:{})
       });
 
       const result = completion.choices[0]?.message?.parsed as QuestionsType;
