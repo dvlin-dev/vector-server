@@ -168,11 +168,36 @@ export class ConversationService {
       console.info('openaiMessages', openaiMessages)
 
       const isGpt5 = this.configService.get('OPENAI_API_MODEL_2')?.includes('gpt-5');
+      
+      // 定义 function tool
+      const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [{
+        type: 'function',
+        function: {
+          name: 'extract_unanswerable_question',
+          description: '当背景信息不足以回答用户问题时，提取用户的核心问题',
+          parameters: {
+            type: 'object',
+            properties: {
+              question: {
+                type: 'string',
+                description: '用户的核心问题，精炼且清晰'
+              },
+              type: {
+                type: 'string',
+                description: '用户的问题类型，例如：产品咨询、售后服务、价格咨询、其他等'
+              }
+            },
+            required: ['question', 'type']
+          }
+        }
+      }];
+      
       // 4. 使用 OpenAI API 发送流式请求
       const response = await this.openai.chat.completions.create({
         model: this.configService.get('OPENAI_API_MODEL_2') || 'gpt-4o',
         messages: openaiMessages,
         stream: true,
+        tools: tools,
         ...(isGpt5 ? {
           verbosity: "low",
           reasoning_effort: "minimal"
@@ -184,21 +209,64 @@ export class ConversationService {
 
       // 处理流式响应 - 新版本 OpenAI SDK
       try {
+        let toolCallId = null;
+        let toolCallName = null;
+        let toolCallArguments = '';
+        let isCollectingToolCall = false;
+        
         for await (const chunk of response) {
-          const content = chunk.choices[0]?.delta?.content || ''
+          // 处理工具调用开始
+          if (chunk.choices[0]?.delta?.tool_calls?.[0]?.function) {
+            const toolCall = chunk.choices[0].delta.tool_calls[0].function;
+            
+            // 如果是工具调用的开始部分
+            if (toolCall.name) {
+              isCollectingToolCall = true;
+              toolCallId = chunk.choices[0].delta.tool_calls[0].index;
+              toolCallName = toolCall.name;
+              toolCallArguments = toolCall.arguments || '';
+              continue;
+            }
+            
+            // 如果是工具调用参数的继续部分
+            if (isCollectingToolCall && toolCall.arguments) {
+              toolCallArguments += toolCall.arguments;
+              continue;
+            }
+          }
+          
+          // 处理普通内容
+          const content = chunk.choices[0]?.delta?.content || '';
           
           if (content) {
             // 更新完整响应
-            fullResponse += content
+            fullResponse += content;
 
             // 发送到客户端
-            res.write(`data: ${JSON.stringify({ content })}\n\n`)
+            res.write(`data: ${JSON.stringify({ content })}\n\n`);
+          }
+        }
+        
+        // 如果收集到了工具调用，处理它
+        if (isCollectingToolCall && toolCallName === 'extract_unanswerable_question') {
+          try {
+            const toolCallData = JSON.parse(toolCallArguments);
+            // 发送工具调用结果到客户端
+            res.write(`data: ${JSON.stringify({ 
+              tool_call: {
+                name: toolCallName,
+                arguments: toolCallData
+              }
+            })}\n\n`);
+            
+          } catch (parseError) {
+            console.error('解析工具调用参数失败:', parseError);
           }
         }
 
         // 发送完成标记
-        res.write('data: [DONE]\n\n')
-        res.end()
+        res.write('data: [DONE]\n\n');
+        res.end();
 
         // 在流结束后，将完整响应保存到数据库
         if (fullResponse.trim()) {
@@ -206,7 +274,7 @@ export class ConversationService {
             conversationId,
             content: fullResponse,
             role: 'assistant',
-          })
+          });
         }
       } catch (streamError) {
         console.error('Stream processing error:', streamError)
