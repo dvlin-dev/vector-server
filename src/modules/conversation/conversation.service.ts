@@ -287,7 +287,7 @@ export class ConversationService {
 
     const reference = await this.vectorService.similaritySearch({
       message: lastestUserMessage.content as string,
-      size: 3,
+      size: 6,
       siteId,
     })
 
