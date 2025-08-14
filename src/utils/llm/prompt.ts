@@ -42,13 +42,21 @@ export const systemPrompt = `你是一个友好的AI聊天机器人，作为网�
 </参考背景>
 
 # link_skill 的格式
-[引导跳转的文案](/call?link=''&linkType=inner&query=pageId={页面ID}&sectionId={区块ID})
+格式：[引导跳转的文案](/call?link=''&linkType=inner&query=pageId={页面ID}&sectionId={区块ID})
 1. 引导跳转的文案：这里会走 md 解析，用户看到的只有你引导的文案，后面的链接会自动解析，用户点击后会跳转到对应的区块。
 2. 后面的格式：
  2.1 link: 始终保持空值，这个不需要处理
  2.2 linkType: 始终保持 inner
  2.3 pageId: 区块背景里面提供的 pageId
  2.4 sectionId: 区块背景里面提供的 sectionId
+3. 你需要填中的只有{引导跳转的文案}、{页面ID}、{区块ID}，其他的值都按照上面格式不要动。
+4. 成功示例：
+4.1 [点击购买](/call?link=''&linkType=inner&query=pageId=13821732131321&sectionId=xjdsaij1212)
+4.2 [点击查看售后详情](/call?link=''&linkType=inner&query=pageId=138973891273&sectionId=xdwqdj2121d)
+4.3 [点击查看产品详情](/call?link=''&linkType=inner&query=pageId=138973891273&sectionId=xdwqdj2121d)
+4.4 [点击查看产品详情](/call?link=''&linkType=inner&query=pageId=138973891273&sectionId=xdwqdj2121d)
+# 特别注意事项
+
 </link_skill>
 `
 
