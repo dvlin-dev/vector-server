@@ -262,11 +262,7 @@ export class ConversationService {
           }
         }
 
-        // 发送完成标记
-        res.write('data: [DONE]\n\n');
-        res.end();
-
-        // 在流结束后，将完整响应保存到数据库
+        // 在流结束前，将完整响应保存到数据库
         if (fullResponse.trim()) {
           await this.createMessage({
             conversationId,
@@ -274,19 +270,30 @@ export class ConversationService {
             role: 'assistant',
           });
         }
+        
+        // 发送完成标记
+        res.write('data: [DONE]\n\n');
+        res.end();
       } catch (streamError) {
         console.error('Stream processing error:', streamError)
-        res.write(`data: ${JSON.stringify({ error: 'system error' })}\n\n`)
-        res.write('data: [DONE]\n\n')
-        res.end()
+        
+        // 确保响应未结束时才写入
+        if (!res.writableEnded) {
+          res.write(`data: ${JSON.stringify({ error: 'system error' })}\n\n`)
+          res.write('data: [DONE]\n\n')
+          res.end()
+        }
       }
     } catch (error) {
       console.error('OpenAI API stream response error:', error)
 
-      // 发送错误信息给客户端
-      res.write(`data: ${JSON.stringify({ error: 'system error' })}\n\n`)
-      res.write('data: [DONE]\n\n')
-      res.end()
+      // 确保响应未结束时才写入
+      if (!res.writableEnded) {
+        // 发送错误信息给客户端
+        res.write(`data: ${JSON.stringify({ error: 'system error' })}\n\n`)
+        res.write('data: [DONE]\n\n')
+        res.end()
+      }
 
       throw error
     }
