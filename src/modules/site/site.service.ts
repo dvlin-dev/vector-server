@@ -351,7 +351,7 @@ export class SiteService {
   /**
    * 生成访问网站时可能想问的问题
    */
-  async generateQuestions(generateQuestionsDto: GenerateQuestionsDto): Promise<{ list: string[] }> {
+  async generateQuestions(generateQuestionsDto: GenerateQuestionsDto): Promise<{ list: string[]; greet: string }> {
     const { siteId, sectionId } = generateQuestionsDto;
 
     try {
@@ -376,7 +376,8 @@ export class SiteService {
 
       // 定义 Zod schema 用于结构化输出
       const QuestionsSchema = z.object({
-        questions: z.array(z.string()).describe("生成的3个问题列表")
+        questions: z.array(z.string()).describe("生成的3个问题列表"),
+        greet: z.string().describe("问候语")
       });
 
       type QuestionsType = z.infer<typeof QuestionsSchema>;
@@ -407,8 +408,8 @@ export class SiteService {
 
       const result = completion.choices[0]?.message?.parsed as QuestionsType;
       
-      if (result && result.questions) {
-        return { list: result.questions };
+      if (result && result.questions && result.greet) {
+        return { list: result.questions, greet: result.greet };
       }
 
       // 如果解析失败，抛出错误进入catch块
@@ -422,7 +423,8 @@ export class SiteService {
           'What is the main function of this website?',
           'How to use the services of this website?',
           'What are the special features of this website?'
-        ]
+        ],
+        greet: 'Hello! Welcome to our website! How can I help you?'
       };
     }
   }

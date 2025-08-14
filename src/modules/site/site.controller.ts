@@ -98,7 +98,7 @@ export class SiteController {
   @ApiOperation({ summary: '根据网站区块信息生成访问网站时可能想问的问题' })
   @ApiResponse({ 
     status: 200, 
-    description: '基于网站信息和区块内容成功生成问题',
+    description: '基于网站信息和区块内容成功生成问题和问候语',
     schema: {
       type: 'object',
       properties: {
@@ -114,6 +114,11 @@ export class SiteController {
             '如何注册和使用该平台的服务？',
             '网站提供哪些特色功能或优势？'
           ]
+        },
+        greet: {
+          type: 'string',
+          description: '问候语',
+          example: '您好，欢迎来到我们的网站！有什么可以帮助您的吗？'
         }
       }
     }

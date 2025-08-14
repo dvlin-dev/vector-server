@@ -21,4 +21,5 @@ export class GenerateQuestionsDto {
 
 export interface GenerateQuestionsResponse {
   list: string[];
+  greet: string;
 }
