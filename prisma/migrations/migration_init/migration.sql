@@ -44,6 +44,7 @@ CREATE TABLE "Site" (
 CREATE TABLE "Ticket" (
     "id" TEXT NOT NULL,
     "content" TEXT NOT NULL,
+    "type" TEXT NOT NULL,
     "status" "TicketStatus" NOT NULL DEFAULT 'PENDING',
     "visitorEmail" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,

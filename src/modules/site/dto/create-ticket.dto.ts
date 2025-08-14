@@ -19,6 +19,14 @@ export class CreateTicketDto {
   visitorEmail: string;
 
   @ApiProperty({
+    description: '工单类型',
+    example: '产品咨询'
+  })
+  @IsString()
+  @IsNotEmpty()
+  type: string;
+
+  @ApiProperty({
     description: '关联的站点ID',
     example: 'uuid-site-id'
   })

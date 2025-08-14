@@ -47,6 +47,7 @@ model Site {
 model Ticket {
   id           String       @id @default(uuid())
   content      String
+  type         String
   status       TicketStatus @default(PENDING)
   visitorEmail String
   createdAt    DateTime     @default(now())
