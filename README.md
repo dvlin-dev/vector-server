@@ -1,4 +1,7 @@
 # vector 服务器
+## Prompt
+SYSTEM_PROMPT: .env.example
+剩余 prompt: src/utils/llm/prompt.ts
 
 ## 主服务
 
